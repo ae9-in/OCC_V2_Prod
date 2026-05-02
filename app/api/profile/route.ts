@@ -27,6 +27,7 @@ export async function GET() {
       role: user.role,
       approvalStatus: user.approvalStatus,
       onboardingComplete: user.onboardingComplete,
+      phoneVerified: user.phoneVerified,
       referredBy: user.referredBy,
       referralCode: user.referralCode,
       createdAt: user.createdAt,

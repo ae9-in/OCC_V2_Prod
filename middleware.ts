@@ -229,7 +229,7 @@ export async function middleware(req: NextRequest) {
       }
 
       if (
-        (payload.onboardingComplete === false || !payload.phoneVerified) &&
+        (payload.onboardingComplete === false || payload.phoneVerified !== true) &&
         !isOnboardingPath
       ) {
         return NextResponse.redirect(new URL("/onboarding", req.url));
@@ -320,8 +320,7 @@ export const config = {
     "/staff-gate-internal/:path*",
     "/staff-panel-internal",
     "/staff-panel-internal/:path*",
-    // ── Security: block build manifest & sensitive files ──
-    "/_next/static/:path*",
+    // ── Security: block sensitive files ──
     "/.env",
     "/.env.local",
     "/.env.example",

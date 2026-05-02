@@ -96,6 +96,40 @@ export async function GET(req: NextRequest, { params }: { params: { type: string
       "Member Count": c._count.members,
       "Description": c.description
     }));
+  } else if (type === "activity") {
+    const activity = await prisma.activityEvent.findMany({
+      where: dateFilter,
+      orderBy: { createdAt: "desc" },
+    });
+    data = activity.map(a => ({
+      "Timestamp": a.createdAt.toISOString(),
+      "Date": a.createdAt.toLocaleDateString(),
+      "Time": a.createdAt.toLocaleTimeString(),
+      "Actor Name": a.actorName,
+      "Actor Role": a.actorRole || "N/A",
+      "Event Type": a.eventType,
+      "Category": a.category,
+      "Summary": a.summary,
+      "Entity": `${a.entityType || ""}${a.entityId ? `:${a.entityId}` : ""}`,
+      "IP Address": a.ipAddress || "N/A",
+      "Details": a.metadata ? JSON.stringify(a.metadata) : "{}"
+    }));
+  } else if (type === "audit") {
+    const audit = await prisma.auditLog.findMany({
+      where: dateFilter,
+      orderBy: { createdAt: "desc" },
+    });
+    data = audit.map(a => ({
+      "Timestamp": a.createdAt.toISOString(),
+      "Date": a.createdAt.toLocaleDateString(),
+      "Time": a.createdAt.toLocaleTimeString(),
+      "Admin Email": a.adminEmail,
+      "Action": a.action,
+      "Entity": a.entity,
+      "Entity ID": a.entityId || "N/A",
+      "IP Address": a.ipAddress || "N/A",
+      "Details": a.details ? JSON.stringify(a.details) : "{}"
+    }));
   } else {
     // Basic fallback for other types if they exist
     return NextResponse.json({ error: "Invalid category" }, { status: 400 });

@@ -30,12 +30,19 @@ export default function OnboardingPage() {
         const res = await fetch("/api/profile");
         if (res.ok) {
           const profile = await res.json();
-          // If they have a college name, jump straight to Step 3 to force phone confirmation
-          const hasCollege = profile.collegeName && profile.collegeName !== "Not specified";
-          if (hasCollege) {
-            setCollegeName(profile.collegeName);
-            setReferralSource(profile.referralSource || "Other");
+          const user = profile.user;
+          // If they haven't verified phone, force Step 3.
+          // Otherwise, if they have a college name, they might have skipped previous steps.
+          if (user.phoneVerified === false) {
+            if (user.collegeName && user.collegeName !== "Not specified") {
+              setCollegeName(user.collegeName);
+            }
+            if (user.referralSource) {
+              setReferralSource(user.referralSource);
+            }
             setStep(3);
+          } else if (user.onboardingComplete === true) {
+            router.push("/dashboard");
           }
         } else if (res.status === 401) {
           window.location.href = "/login?reauth=1";

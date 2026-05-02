@@ -60,6 +60,7 @@ export async function POST(req: NextRequest) {
         password: hashedPassword,
         role: "STUDENT",
         onboardingComplete: true,
+        phoneVerified: false,
         emailVerified: new Date(),
         referralSource: "Email registration",
       },
@@ -87,6 +88,7 @@ export async function POST(req: NextRequest) {
       approvalStatus: "APPROVED",
       suspended: false,
       onboardingComplete: true,
+      phoneVerified: false,
       hasPhone: !!(validated.phoneNumber && validated.phoneNumber.replace(/\D/g, "").length === 10),
     });
     const response = NextResponse.json({ success: true, user }, { status: 201 });

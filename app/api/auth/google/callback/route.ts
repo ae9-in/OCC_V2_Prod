@@ -35,7 +35,7 @@ function safeRedirectPath(path: string | null | undefined): string {
 }
 
 function postLoginDestination(
-  user: { role: string; approvalStatus: string; onboardingComplete?: boolean; phoneNumber?: string | null },
+  user: { role: string; approvalStatus: string; onboardingComplete?: boolean; phoneNumber?: string | null; phoneVerified?: boolean },
   redirectCookie: string | undefined,
 ): string {
   const safe = safeRedirectPath(redirectCookie);
@@ -315,7 +315,8 @@ export async function GET(req: NextRequest) {
       role: user.role, 
       approvalStatus: user.approvalStatus, 
       onboardingComplete: user.onboardingComplete,
-      phoneNumber: user.phoneNumber
+      phoneNumber: user.phoneNumber,
+      phoneVerified: user.phoneVerified
     },
     redirectCookieVal,
   );

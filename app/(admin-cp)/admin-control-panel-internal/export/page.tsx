@@ -2,13 +2,15 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Download, Users, Settings, ShieldCheck, Mail, Lock, X, Loader2, Calendar, ChevronRight } from "lucide-react";
+import { Download, Users, Settings, ShieldCheck, Mail, Lock, X, Loader2, Calendar, ChevronRight, Activity, ScrollText } from "lucide-react";
 import { toast } from "sonner";
 
 const exportCategories = [
   { type: "users", label: "Users Details", desc: "Full directory including phone, email, college, and referral history", icon: Users, color: "#5227FF" },
   { type: "headers", label: "Club Headers", desc: "List of all club headers, their assigned clubs, and active referral codes", icon: Settings, color: "#00E87A" },
   { type: "clubs", label: "Club Overview", desc: "Summary of all active clubs, member counts, and header assignments", icon: Settings, color: "#8C6DFD" },
+  { type: "activity", label: "Platform Activity", desc: "Timeline of auth, social, and profile actions with full timestamps", icon: Activity, color: "#FFA500" },
+  { type: "audit", label: "Admin Audit Log", desc: "Detailed history of admin actions, including entity changes and system updates", icon: ScrollText, color: "#FF4500" },
 ];
 
 const datePresets = [

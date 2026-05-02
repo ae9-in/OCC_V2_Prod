@@ -14,6 +14,8 @@ export type AuthTokenPayload = {
   /** false = must complete /onboarding (e.g. first Google sign-in). Omitted on legacy tokens = treat as done. */
   onboardingComplete?: boolean;
   /** true = has a valid 10-digit phone number. used for global redirection logic. */
+  phoneVerified?: boolean;
+  /** true = has a valid 10-digit phone number. used for global redirection logic. */
   hasPhone?: boolean;
   /** specifically for administrative exports verified via personal email. */
   targetEmail?: string;
