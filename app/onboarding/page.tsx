@@ -34,12 +34,8 @@ export default function OnboardingPage() {
           // If they haven't verified phone, force Step 3.
           // Otherwise, if they have a college name, they might have skipped previous steps.
           if (user.phoneVerified === false) {
-            if (user.collegeName && user.collegeName !== "Not specified") {
-              setCollegeName(user.collegeName);
-            }
-            if (user.referralSource) {
-              setReferralSource(user.referralSource);
-            }
+            setCollegeName(user.collegeName || "Not specified");
+            setReferralSource(user.referralSource || "Other");
             setStep(3);
           } else if (user.onboardingComplete === true) {
             router.push("/dashboard");
