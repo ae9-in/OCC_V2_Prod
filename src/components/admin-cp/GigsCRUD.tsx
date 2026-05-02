@@ -1,10 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
-import { Plus, ChevronDown, Trash2, X, Check, Loader2 } from "lucide-react";
+import { Plus, ChevronDown, Trash2, X, Check, Loader2, ClipboardCheck } from "lucide-react";
 
 type Gig = {
   id: string; title: string; description: string; payMin: number; payMax: number;
@@ -112,10 +113,16 @@ export function GigsCRUD({ gigs: initial, clubs }: { gigs: Gig[]; clubs: { id: s
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-[#5227FF]">Operations</p>
           <h1 className="mt-1 text-2xl font-bold text-white">Gigs ({gigs.length})</h1>
         </div>
-        <button onClick={() => { setForm({ title: "", description: "", payMin: 0, payMax: 0, clubId: clubs[0]?.id || "" }); setShowModal(true); }}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#5227FF] to-[#8C6DFD] text-sm font-bold text-white">
-          <Plus className="h-4 w-4" /> Create Gig
-        </button>
+        <div className="flex items-center gap-3">
+          <Link href="/k9xm2p7qv4nw8-admin-control-panel/gigs/applications"
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-sm font-bold text-white/70 hover:text-white hover:bg-white/[0.05] transition-all">
+            <ClipboardCheck className="h-4 w-4" /> View All Applications
+          </Link>
+          <button onClick={() => { setForm({ title: "", description: "", payMin: 0, payMax: 0, clubId: clubs[0]?.id || "" }); setShowModal(true); }}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#5227FF] to-[#8C6DFD] text-sm font-bold text-white">
+            <Plus className="h-4 w-4" /> Create Gig
+          </button>
+        </div>
       </div>
 
       <div className="space-y-2">

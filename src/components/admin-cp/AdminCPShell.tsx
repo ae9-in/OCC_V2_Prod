@@ -6,6 +6,7 @@ import {
   LayoutDashboard, Grid3X3, Users, FileText, Calendar, Orbit, Briefcase,
   CheckCircle2, TrendingUp, ScrollText, Settings, Download,
   ChevronRight, LogOut, MoreHorizontal, Shield, Flag, ToggleLeft, Radio, Clock, FileKey,
+  ClipboardCheck
 } from "lucide-react";
 import { adminCpHref, ADMIN_CP_PREFIX } from "@/lib/staff-paths";
 import { type AdminLevel, can, type AdminModule, type EffectiveAdminAccess } from "@/lib/admin-permissions";
@@ -30,6 +31,7 @@ const nav: NavItem[] = [
   { path: "/events", label: "Events", icon: Calendar, module: "events" },
   { path: "/orbit", label: "Orbit", icon: Orbit, module: "orbit" },
   { path: "/gigs", label: "Gigs", icon: Briefcase, module: "gigs" },
+  { path: "/gigs/applications", label: "Applications", icon: ClipboardCheck, module: "gigs" },
   { path: "/approvals", label: "Approvals", icon: CheckCircle2, badgeKey: "pending", module: "approvals" },
   { path: "/moderation", label: "Moderation", icon: Flag, module: "moderation" },
   { path: "/analytics", label: "Analytics", icon: TrendingUp, module: "analytics" },
