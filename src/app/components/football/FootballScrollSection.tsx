@@ -28,7 +28,7 @@ export function FootballScrollSection({ frames, loaded = true }: Props) {
   const physics = useFootballPhysics(containerRef, FOOTBALL_TOTAL_FRAMES);
   const playhead = physics.playhead;
 
-  // ── Stadium flash — fires once as playhead crosses the GOAL chapter ───
+  // -- Stadium flash -- fires once as playhead crosses the GOAL chapter ---
   const [flashOpacity, setFlashOpacity] = useState(0);
   const goalFlashFired = useRef(false);
   const flashTimer     = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -46,7 +46,7 @@ export function FootballScrollSection({ frames, loaded = true }: Props) {
 
   useEffect(() => () => { if (flashTimer.current) clearTimeout(flashTimer.current); }, []);
 
-  // ── Derived booleans — all from playheadProgress ──────────────────────
+  // -- Derived booleans -- all from playheadProgress ----------------------
   const p              = playhead.playheadProgress;
   const trackerVisible = p >= 0.15 && p <= 0.80;
   const crowdVisible   = p >= 0.65 && p <= 0.82;
@@ -66,14 +66,14 @@ export function FootballScrollSection({ frames, loaded = true }: Props) {
       ref={containerRef}
       id="football-section"
       className="relative"
-      style={{ height: `${FOOTBALL_SCROLL_HEIGHT_VH}vh`, background: "#060606" }}
+      style={{ height: `${FOOTBALL_SCROLL_HEIGHT_VH}vh`, background: "#060606", contain: "layout style paint" }}
     >
       <div
         className="sticky top-0 relative isolate h-[100dvh] w-full overflow-hidden"
-        style={{ background: "#060606" }}
+        style={{ background: "#060606", willChange: "transform" }}
       >
 
-        {/* Canvas — receives floating currentFrame for sub-frame blending */}
+        {/* Canvas -- receives floating currentFrame for sub-frame blending */}
         <FootballCanvas
           frames={frames}
           totalFrames={FOOTBALL_TOTAL_FRAMES}
@@ -115,7 +115,7 @@ export function FootballScrollSection({ frames, loaded = true }: Props) {
                 className="mb-6 text-[10px] tracking-[0.5em] uppercase"
                 style={{ color: FC.accent }}
               >
-                OCC · Football Club
+                OCC . Football Club
               </p>
               <h1 className="font-headline text-5xl font-light leading-[1.0] tracking-wide sm:text-6xl md:text-7xl lg:text-8xl">
                 Stadium
@@ -126,7 +126,7 @@ export function FootballScrollSection({ frames, loaded = true }: Props) {
                 className="mx-auto mt-8 max-w-md text-sm leading-relaxed md:text-base"
                 style={{ color: FC.muted }}
               >
-                Scroll — the same sequence scrubs beneath you. One viewport, no second page.
+                Scroll -- the same sequence scrubs beneath you. One viewport, no second page.
               </p>
             </motion.div>
             <motion.p
@@ -135,12 +135,12 @@ export function FootballScrollSection({ frames, loaded = true }: Props) {
               animate={{ y: [0, 6, 0] }}
               transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
             >
-              Scroll to begin ↓
+              Scroll to begin 
             </motion.p>
           </div>
         ) : null}
 
-        {/* Chapter text — timed to playheadProgress so text inherits momentum */}
+        {/* Chapter text -- timed to playheadProgress so text inherits momentum */}
         {FOOTBALL_CHAPTERS.map((ch) => (
           <FootballChapterText key={ch.id} chapter={ch} scrollProgress={p} />
         ))}

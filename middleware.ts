@@ -147,6 +147,7 @@ export async function middleware(req: NextRequest) {
   const isHeaderPath = pathname.startsWith("/header");
   const isPendingPath = pathname.startsWith("/pending");
   const isOnboardingPath = pathname === "/onboarding" || pathname.startsWith("/onboarding/");
+  const isUpdatePhonePath = pathname === "/update-phone" || pathname.startsWith("/update-phone/");
   const requiresAuth = isProtected || isStaffPanel || isAdminCP || isHeaderPath || isPendingPath;
 
   if (isOnboardingPath) {
@@ -163,14 +164,52 @@ export async function middleware(req: NextRequest) {
         response.cookies.delete("occ-token");
         return response;
       }
-      // Only allow access to onboarding if they haven't verified their phone permanently in DB
-      if (payload.onboardingComplete === true && payload.phoneVerified === true) {
+      // Local users must never access /onboarding — they use /update-phone
+      if (payload.provider === "local") {
+        return NextResponse.redirect(
+          payload.hasPhone === true
+            ? new URL("/dashboard", req.url)
+            : new URL("/update-phone", req.url),
+        );
+      }
+      // Google users who already have phone and completed onboarding are done
+      if (payload.hasPhone === true && payload.onboardingComplete !== false) {
         return NextResponse.redirect(new URL("/dashboard", req.url));
       }
       return NextResponse.next();
     } catch {
       const loginUrl = new URL("/login", req.url);
       loginUrl.searchParams.set("redirect", "/onboarding");
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+
+  if (isUpdatePhonePath) {
+    if (!token) {
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("redirect", "/update-phone");
+      return NextResponse.redirect(loginUrl);
+    }
+    try {
+      const payload = await verifyAuthToken(token);
+      if (payload.suspended) {
+        const loginUrl = new URL("/login", req.url);
+        const response = NextResponse.redirect(loginUrl);
+        response.cookies.delete("occ-token");
+        return response;
+      }
+      // Google users collect phone through /onboarding, not /update-phone
+      if (payload.provider === "google") {
+        return NextResponse.redirect(new URL("/onboarding", req.url));
+      }
+      // Already has phone — no reason to be here
+      if (payload.hasPhone === true) {
+        return NextResponse.redirect(new URL("/dashboard", req.url));
+      }
+      return NextResponse.next();
+    } catch {
+      const loginUrl = new URL("/login", req.url);
+      loginUrl.searchParams.set("redirect", "/update-phone");
       return NextResponse.redirect(loginUrl);
     }
   }
@@ -228,11 +267,20 @@ export async function middleware(req: NextRequest) {
         return NextResponse.redirect(new URL("/header/dashboard", req.url));
       }
 
-      if (
-        (payload.onboardingComplete === false || payload.phoneVerified !== true) &&
-        !isOnboardingPath
-      ) {
-        return NextResponse.redirect(new URL("/onboarding", req.url));
+      // Provider-aware phone/onboarding guard
+      const isGoogleUser =
+        payload.provider === "google" ||
+        (payload.provider === undefined && payload.onboardingComplete === false);
+
+      if (isGoogleUser) {
+        if (payload.onboardingComplete === false || payload.hasPhone !== true) {
+          return NextResponse.redirect(new URL("/onboarding", req.url));
+        }
+      } else {
+        // Local user (or legacy token with onboardingComplete: true)
+        if (payload.hasPhone !== true) {
+          return NextResponse.redirect(new URL("/update-phone", req.url));
+        }
       }
 
       return NextResponse.next();
@@ -320,6 +368,7 @@ export const config = {
     "/staff-gate-internal/:path*",
     "/staff-panel-internal",
     "/staff-panel-internal/:path*",
+    "/update-phone",
     // ── Security: block sensitive files ──
     "/.env",
     "/.env.local",

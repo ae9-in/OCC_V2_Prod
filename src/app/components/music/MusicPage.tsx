@@ -3,11 +3,11 @@
 import React, { useEffect } from "react";
 import { Link } from "@/lib/router-compat";
 import { motion, AnimatePresence } from "motion/react";
-import { useMusicFrames } from "../../../hooks/useMusicFrames";
-import { MUSIC_TOTAL_FRAMES, MUSIC_FRAMES_PATH, MUSIC_FRAME_PREFIX, FC } from "./MusicConstants";
+import { useMusicVideoFrames } from "../../../hooks/useMusicVideoFrames";
+import { FC } from "./MusicConstants";
 import { MusicScrollSection } from "./MusicScrollSection";
 
-/* â”€â”€ Loading Screen â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* -- Loading Screen -- */
 function MusicLoadingScreen({ progress, loaded }: { progress: number; loaded: boolean }) {
   return (
     <AnimatePresence>
@@ -45,7 +45,7 @@ function MusicLoadingScreen({ progress, loaded }: { progress: number; loaded: bo
   );
 }
 
-/* â”€â”€ Custom Cursor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* -- Custom Cursor -- */
 function MusicCursor() {
   const dotRef = React.useRef<HTMLDivElement>(null);
   const ringRef = React.useRef<HTMLDivElement>(null);
@@ -87,7 +87,7 @@ function MusicCursor() {
   );
 }
 
-/* â”€â”€ Grain Overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* -- Grain Overlay -- */
 function GrainOverlay() {
   return (
     <div className="pointer-events-none fixed inset-0 z-[9997] opacity-[0.022]">
@@ -99,7 +99,7 @@ function GrainOverlay() {
   );
 }
 
-/* â”€â”€ Post-scroll Sections â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* -- Post -- */
 const P = {
   bg: "#060606", card: "#111111", elevated: "#1A1A1A",
   border: "rgba(255,255,255,0.08)", borderHover: "rgba(139,92,246,0.35)",
@@ -107,7 +107,7 @@ const P = {
   accent: "#8B5CF6",
 } as const;
 
-/* â”€â”€ Open Mic Masonry Section â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* -- Open Mic Masonry Section -- */
 const B = {
   bg: "#08080C", // Deep Navy-Black
   card: "rgba(18, 18, 24, 0.4)",
@@ -180,7 +180,7 @@ function OpenMicExperienceSection({ userId }: { userId?: string | null }) {
 
   return (
     <section className="relative w-full overflow-hidden" style={{ background: B.bg }}>
-      {/* Background Glow Overlay */}
+      {/* -- Background Glow Overlay -- */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-0 right-0 w-[60rem] h-[60rem] bg-violet-600/5 blur-[120px] rounded-full" />
         <div className="absolute bottom-0 left-0 w-[40rem] h-[40rem] bg-indigo-600/5 blur-[120px] rounded-full" />
@@ -215,7 +215,7 @@ function OpenMicExperienceSection({ userId }: { userId?: string | null }) {
           </motion.div>
         </div>
 
-        {/* Masonry Grid */}
+        {/* -- Masonry Grid -- */}
         <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
           {cards.map((card, i) => (
             <motion.div
@@ -239,7 +239,7 @@ function OpenMicExperienceSection({ userId }: { userId?: string | null }) {
                 e.currentTarget.style.boxShadow = "none";
               }}
             >
-              {/* Image Background for specific cards */}
+              {/* -- Image Background for specific cards -- */}
               {card.image && (
                 <div className="absolute inset-0 z-0 overflow-hidden opacity-35 group-hover:opacity-55 transition-opacity duration-1000">
                   <img src={card.image} alt="" className="w-full h-full object-cover scale-105 group-hover:scale-100 transition-transform duration-1200" />
@@ -247,7 +247,7 @@ function OpenMicExperienceSection({ userId }: { userId?: string | null }) {
                 </div>
               )}
 
-              {/* Card Content Overlay */}
+              {/* -- Card Content Overlay -- */}
               <div className="relative z-10 p-8 h-full flex flex-col justify-between">
                 <div>
                   <div className="mb-8 flex h-14 w-14 items-center justify-center rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 transition-transform duration-500 group-hover:scale-110 group-hover:bg-violet-600/20 group-hover:border-violet-500/30">
@@ -274,7 +274,7 @@ function OpenMicExperienceSection({ userId }: { userId?: string | null }) {
                 </div>
               </div>
 
-              {/* Decorative Corner Light */}
+              {/* -- Decorative Corner Light -- */}
               <div className="absolute top-0 right-0 w-24 h-24 bg-violet-500/10 blur-2xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
             </motion.div>
           ))}
@@ -388,15 +388,28 @@ function JoinMusicSection({ userId }: { userId?: string | null }) {
   );
 }
 
-/* â”€â”€ Main Page â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
-export function MusicPage({ 
+/* -- Main Page -- */
+/** Video source for the scroll-cinema section.
+ *  Uses NEXT_PUBLIC_FRAMES_CDN_BASE (or VITE_FRAMES_CDN_BASE) when set,
+ *  otherwise falls back to the local /music/ path for dev. */
+const VIDEO_SRC = (() => {
+  const raw = String(
+    process.env.NEXT_PUBLIC_FRAMES_CDN_BASE ??
+    process.env.VITE_FRAMES_CDN_BASE ??
+    "",
+  ).trim();
+  const base = (!raw || raw === "undefined" || raw === "null") ? "" : raw.replace(/\/$/, "");
+  return base ? `${base}/Music_Update/mus-occ.mp4` : "/music/mus-occ.mp4";
+})();
+
+export function MusicPage({
   hideLoader = false,
   userId
-}: { 
+}: {
   hideLoader?: boolean;
   userId?: string | null;
 } = {}) {
-  const { frames, loaded, progress } = useMusicFrames(MUSIC_FRAMES_PATH, MUSIC_TOTAL_FRAMES, MUSIC_FRAME_PREFIX);
+  const { frames, loaded, progress, totalFrames } = useMusicVideoFrames(VIDEO_SRC);
 
   return (
     <div className="cursor-none" style={{ background: FC.bg, color: FC.text }}>
@@ -412,7 +425,7 @@ export function MusicPage({
         <span className="text-[10px] tracking-[0.3em] uppercase" style={{ color: FC.muted }}>Music</span>
       </header>
 
-      <MusicScrollSection frames={frames} loaded={loaded} />
+      <MusicScrollSection frames={frames} totalFrames={totalFrames} loaded={loaded} />
 
       <OpenMicExperienceSection userId={userId} />
       <GigOpportunitiesSection />

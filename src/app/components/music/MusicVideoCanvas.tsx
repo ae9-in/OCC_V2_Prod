@@ -1,54 +1,43 @@
-import React, { useCallback, useEffect, useRef } from "react";
-import type { FootballPlayhead } from "../../../hooks/useFootballPhysics";
+import React, { useCallback, useEffect, useRef, type MutableRefObject } from "react";
+import type { MusicVideoPlayhead } from "../../../hooks/useMusicVideoPhysics";
 
 interface Props {
-  frames: HTMLImageElement[];
+  frames: ImageBitmap[];
   totalFrames: number;
-  playhead: FootballPlayhead;
-  playheadRef?: React.MutableRefObject<FootballPlayhead>;
-  flashOpacity: number;
+  /** Ref updated every rAF tick by the physics hook -- zero re-renders */
+  playheadRef: MutableRefObject<MusicVideoPlayhead>;
+  flashOpacityRef: MutableRefObject<number>;
 }
 
-/** Draws a single image centered and scaled suitably for the scroll-cinema. */
 function drawSingleFrame(
   ctx: CanvasRenderingContext2D,
-  img: HTMLImageElement | undefined,
+  bmp: ImageBitmap | undefined,
   W: number,
   H: number,
   floatY: number,
   tiltDeg: number,
   effectiveScale: number,
-) {
-  if (!img || !img.complete || !img.naturalWidth) return false;
-
-  const fa = img.naturalWidth / img.naturalHeight;
+): boolean {
+  if (!bmp || bmp.width === 0) return false;
+  const fa = bmp.width / bmp.height;
   const ca = W / H;
   let dW: number, dH: number;
-
-  if (ca < fa) {
-    dH = H * effectiveScale;
-    dW = dH * fa;
-  } else {
-    dW = W * effectiveScale;
-    dH = dW / fa;
-  }
-
+  if (ca < fa) { dH = H * effectiveScale; dW = dH * fa; }
+  else { dW = W * effectiveScale; dH = dW / fa; }
   const dx = (W - dW) / 2;
   const dy = (H - dH) / 2;
-
   ctx.save();
   ctx.translate(W / 2, H / 2);
   ctx.rotate((tiltDeg * Math.PI) / 180);
   ctx.translate(-W / 2, -H / 2);
-  ctx.drawImage(img, dx, dy + floatY, dW, dH);
+  ctx.drawImage(bmp, dx, dy + floatY, dW, dH);
   ctx.restore();
   return true;
 }
 
-/** Blend between two frames based on fractional playhead. */
 function drawFrameBlend(
   ctx: CanvasRenderingContext2D,
-  frames: HTMLImageElement[],
+  frames: ImageBitmap[],
   total: number,
   floatIndex: number,
   W: number,
@@ -60,94 +49,64 @@ function drawFrameBlend(
   const frameA = Math.floor(floatIndex);
   const frameB = Math.min(frameA + 1, total - 1);
   const blend = floatIndex - frameA;
-
   ctx.globalAlpha = 1;
   const okA = drawSingleFrame(ctx, frames[frameA], W, H, floatY, tiltDeg, effectiveScale);
-
-  // If frameA failed, try a neighboring frame as fallback to prevent black flickers
   if (!okA) {
     for (let offset = 1; offset < 10; offset++) {
       const fallback = Math.max(0, frameA - offset);
       if (drawSingleFrame(ctx, frames[fallback], W, H, floatY, tiltDeg, effectiveScale)) break;
     }
   }
-
-  if (blend > 0.005 && frameB !== frameA && frames[frameB]?.complete) {
+  if (blend > 0.005 && frameB !== frameA && frames[frameB]) {
     ctx.globalAlpha = blend;
     drawSingleFrame(ctx, frames[frameB], W, H, floatY, tiltDeg, effectiveScale);
   }
 }
 
-export function FootballCanvas({
+export const MusicVideoCanvas = React.memo(function MusicVideoCanvas({
   frames,
   totalFrames,
-  playhead,
   playheadRef,
-  flashOpacity,
+  flashOpacityRef,
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const ctxRef = useRef<CanvasRenderingContext2D | null>(null);
   const rafRef = useRef(0);
-  const ref = useRef({ playhead, flashOpacity });
-  ref.current = { playhead, flashOpacity };
 
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    const ctx = ctxRef.current ?? canvas.getContext("2d", { alpha: false });
+    const ctx = canvas.getContext("2d", { alpha: false });
     if (!ctx) return;
-    if (!ctxRef.current) ctxRef.current = ctx;
-
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     const W = canvas.clientWidth;
     const H = canvas.clientHeight;
-
     if (W === 0 || H === 0) return;
-
     if (canvas.width !== W * dpr || canvas.height !== H * dpr) {
       canvas.width = W * dpr;
       canvas.height = H * dpr;
     }
-
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const { playhead: statePlayhead, flashOpacity: fo } = ref.current;
-    const ph = playheadRef?.current ?? statePlayhead;
-    const { currentFrame, floatY, tiltDeg, scaleVal, zoomVal, speedIntensity } = ph;
+    // Read directly from refs -- no React re-render needed
+    const ph = playheadRef.current;
+    const fo = flashOpacityRef.current;
+    const { currentFrame, floatY, tiltDeg, scaleVal, zoomVal } = ph;
 
-    // Background clearing
     ctx.fillStyle = "#060606";
     ctx.fillRect(0, 0, W, H);
-
     if (frames.length > 0) {
-      drawFrameBlend(
-        ctx,
-        frames,
-        totalFrames,
-        currentFrame,
-        W,
-        H,
-        floatY,
-        tiltDeg,
-        scaleVal * zoomVal,
-      );
+      drawFrameBlend(ctx, frames, totalFrames, currentFrame, W, H, floatY, tiltDeg, scaleVal * zoomVal);
     }
-
-    // Flash overlay
     if (fo > 0.01) {
       ctx.globalAlpha = fo;
       ctx.fillStyle = "#FFFFFF";
       ctx.fillRect(0, 0, W, H);
       ctx.globalAlpha = 1;
     }
-
-  }, [frames, totalFrames]);
+  }, [frames, totalFrames, playheadRef, flashOpacityRef]);
 
   useEffect(() => {
-    const loop = () => {
-      draw();
-      rafRef.current = requestAnimationFrame(loop);
-    };
+    const loop = () => { draw(); rafRef.current = requestAnimationFrame(loop); };
     rafRef.current = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(rafRef.current);
   }, [draw]);
@@ -159,10 +118,6 @@ export function FootballCanvas({
     ro.observe(canvas);
     return () => ro.disconnect();
   }, [draw]);
-
-  useEffect(() => {
-    ctxRef.current = null;
-  }, []);
 
   return (
     <canvas
@@ -177,4 +132,4 @@ export function FootballCanvas({
       }}
     />
   );
-}
+});

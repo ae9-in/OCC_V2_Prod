@@ -103,6 +103,7 @@ export async function POST(req: NextRequest) {
         onboardingComplete: user.onboardingComplete,
         phoneVerified: user.phoneVerified,
         hasPhone: isLegitIndianMobile(user.phoneNumber),
+        provider: "local",
       },
       { expiresIn: `${sessionDays}d` },
     );
@@ -111,6 +112,7 @@ export async function POST(req: NextRequest) {
       success: true,
       role: user.role,
       approvalStatus: user.approvalStatus,
+      hasPhone: isLegitIndianMobile(user.phoneNumber),
       user: {
         id: user.id,
         fullName: user.fullName,

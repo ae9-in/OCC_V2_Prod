@@ -173,6 +173,8 @@ export function FashionCanvas({
         background: "#050505",
         opacity: frames.length > 0 ? 1 : 0,
         transition: "opacity 0.6s ease",
+        willChange: "transform",
+        contain: "strict",
       }}
     />
   );

@@ -1,14 +1,16 @@
 import { useEffect, useRef, useState, type MutableRefObject } from "react";
 import { stickySectionScrollProgress } from "../lib/frameImage";
 
-// ─── One-way damped chase — lerp cannot overshoot, no spring bounce ─────────
-const EASE = 0.06; // smooth ~1s coast toward scroll target
-const SLACK = 2;   // max frames ahead/behind target (tight leash)
-
-// Antigravity: driven only by how fast the scroll *target* moves (no wheel impulse)
-const SCROLL_VEL_GAIN = 55;   // scale per-RAF target delta → feel
-const VEL_DECAY = 0.88;       // decay scroll velocity when target stops moving
-const MAX_NORM = 1;
+/**
+ * Photography-grade smoothing for Football scroll-cinema.
+ * dt-compensated exponential lerp, throttled React state (~75fps),
+ * ref-based playhead for canvas (every rAF tick, zero re-renders).
+ */
+const EASE = 0.015;
+const SLACK = 0.25;
+const SCROLL_VEL_GAIN = 38;
+const VEL_DECAY = 0.952;
+const MAX_NORM = 1.35;
 
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
@@ -32,47 +34,53 @@ export interface FootballPhysics {
   playheadRef: MutableRefObject<FootballPlayhead>;
 }
 
+const INITIAL: FootballPlayhead = {
+  currentFrame: 0,
+  playheadProgress: 0,
+  floatY: 0,
+  tiltDeg: 0,
+  scaleVal: 1.15,
+  zoomVal: 1,
+  speedIntensity: 0,
+};
+
 export function useFootballPhysics(
   containerRef: React.RefObject<HTMLElement | null>,
   totalFrames: number,
 ): FootballPhysics {
+  const playheadRef = useRef<FootballPlayhead>({ ...INITIAL });
   const physicsFrame = useRef(0);
   const prevTarget = useRef(0);
   const scrollVel = useRef(0);
-  const lastUiCommitMs = useRef(0);
   const ag = useRef({
     floatY: 0,
     tiltDeg: 0,
-    scaleVal: 1,
+    scaleVal: 1.15,
     zoomVal: 1,
     speedIntensity: 0,
   });
+  const lastTs = useRef<number | null>(null);
 
-  const [state, setState] = useState<FootballPlayhead>({
-    currentFrame: 0,
-    playheadProgress: 0,
-    floatY: 0,
-    tiltDeg: 0,
-    scaleVal: 1,
-    zoomVal: 1,
-    speedIntensity: 0,
-  });
-  const playheadRef = useRef<FootballPlayhead>(state);
+  const [state, setState] = useState<FootballPlayhead>({ ...INITIAL });
+  const lastEmitTs = useRef(0);
+  const lastEmittedFrame = useRef(0);
+  const lastEmittedProgress = useRef(0);
 
   useEffect(() => {
     let raf = 0;
-    const loop = () => {
+    const loop = (ts: number) => {
+      const prev = lastTs.current ?? ts;
+      const dt = clamp((ts - prev) / (1000 / 60), 0.5, 2);
+      lastTs.current = ts;
+
       const el = containerRef.current;
       if (el) {
         const rawProgress = stickySectionScrollProgress(el);
         const targetFrame = rawProgress * (totalFrames - 1);
-
-        // How fast user is moving the scroll anchor this frame (native scroll only)
         const deltaTarget = targetFrame - prevTarget.current;
 
-        // Damped chase toward target — mathematically cannot oscillate past target
-        let pf =
-          physicsFrame.current + (targetFrame - physicsFrame.current) * EASE;
+        const frameEase = 1 - Math.pow(1 - EASE, dt);
+        let pf = physicsFrame.current + (targetFrame - physicsFrame.current) * frameEase;
 
         if (targetFrame > prevTarget.current) {
           pf = Math.min(pf, targetFrame + SLACK);
@@ -84,35 +92,28 @@ export function useFootballPhysics(
         physicsFrame.current = pf;
         prevTarget.current = targetFrame;
 
-        // Scroll-derived “velocity” for FX — decays when scroll stops (no spring fight)
-        scrollVel.current += deltaTarget * SCROLL_VEL_GAIN;
-        scrollVel.current *= VEL_DECAY;
+        scrollVel.current += deltaTarget * SCROLL_VEL_GAIN * dt;
+        scrollVel.current *= Math.pow(VEL_DECAY, dt);
         if (Math.abs(scrollVel.current) < 0.001) scrollVel.current = 0;
 
         const nv = clamp(scrollVel.current / 4, -MAX_NORM, MAX_NORM);
         const absNv = Math.abs(nv);
 
-        ag.current.floatY = lerp(
-          ag.current.floatY,
-          clamp(-nv * 45, -45, 20),
-          0.06,
-        );
-        ag.current.tiltDeg = lerp(
-          ag.current.tiltDeg,
-          clamp(-nv * 3, -3, 3),
-          0.06,
-        );
-        ag.current.scaleVal = lerp(ag.current.scaleVal, 1 + absNv * 0.02, 0.06);
-        ag.current.zoomVal = lerp(ag.current.zoomVal, 1 + absNv * 0.03, 0.05);
-        ag.current.speedIntensity = lerp(
-          ag.current.speedIntensity,
-          Math.min(absNv * 1.5, 1),
-          0.08,
-        );
+        const microEase = 1 - Math.pow(1 - 0.06, dt);
+        const zoomEase = 1 - Math.pow(1 - 0.05, dt);
+        const intensityEase = 1 - Math.pow(1 - 0.08, dt);
 
-        const next: FootballPlayhead = {
+        ag.current.floatY = lerp(ag.current.floatY, clamp(-nv * 32, -32, 16), microEase);
+        ag.current.tiltDeg = lerp(ag.current.tiltDeg, clamp(-nv * 2.2, -2.2, 2.2), microEase);
+        ag.current.scaleVal = lerp(ag.current.scaleVal, 1.15 + absNv * 0.014, microEase);
+        ag.current.zoomVal = lerp(ag.current.zoomVal, 1 + absNv * 0.02, zoomEase);
+        ag.current.speedIntensity = lerp(ag.current.speedIntensity, Math.min(absNv * 1.1, 1), intensityEase);
+
+        const nextProgress = physicsFrame.current / Math.max(1, totalFrames - 1);
+
+        playheadRef.current = {
           currentFrame: physicsFrame.current,
-          playheadProgress: physicsFrame.current / Math.max(1, totalFrames - 1),
+          playheadProgress: nextProgress,
           floatY: ag.current.floatY,
           tiltDeg: ag.current.tiltDeg,
           scaleVal: ag.current.scaleVal,
@@ -120,14 +121,16 @@ export function useFootballPhysics(
           speedIntensity: ag.current.speedIntensity,
         };
 
-        // Keep the high-frequency playhead fully up-to-date for canvas draws.
-        playheadRef.current = next;
+        const shouldEmit =
+          ts - lastEmitTs.current >= 1000 / 75 ||
+          Math.abs(physicsFrame.current - lastEmittedFrame.current) >= 0.15 ||
+          Math.abs(nextProgress - lastEmittedProgress.current) >= 0.0008;
 
-        // Commit UI state at ~30fps to reduce expensive React re-renders.
-        const now = performance.now();
-        if (now - lastUiCommitMs.current >= 33) {
-          lastUiCommitMs.current = now;
-          setState(next);
+        if (shouldEmit) {
+          lastEmitTs.current = ts;
+          lastEmittedFrame.current = physicsFrame.current;
+          lastEmittedProgress.current = nextProgress;
+          setState({ ...playheadRef.current });
         }
       }
       raf = requestAnimationFrame(loop);

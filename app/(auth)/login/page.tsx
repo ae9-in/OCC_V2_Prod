@@ -79,9 +79,11 @@ function LoginPageInner() {
 
       const role = data?.role;
       const approval = data?.approvalStatus;
+      const hasPhone = data?.hasPhone;
       let next = redirectTo;
       if (!redirectTo || redirectTo === "/dashboard") {
-        if (role === "ADMIN") next = STAFF_PUBLIC_PREFIX;
+        if (hasPhone === false) next = "/update-phone";
+        else if (role === "ADMIN") next = STAFF_PUBLIC_PREFIX;
         else if (role === "CLUB_HEADER" && approval === "APPROVED") next = "/header/dashboard";
         else if (role === "CLUB_HEADER" && approval === "PENDING") next = "/pending";
         else next = "/dashboard";

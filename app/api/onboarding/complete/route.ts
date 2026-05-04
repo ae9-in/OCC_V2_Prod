@@ -2,11 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUser } from "@/lib/auth";
 import { attachStudentToReferralCode } from "@/lib/attach-referral";
-import { authCookieOptions, signAuthToken } from "@/lib/jwt";
+import { authCookieOptions, signAuthToken, verifyAuthToken } from "@/lib/jwt";
 import { logSuspiciousAccess } from "@/lib/security";
 import { sha256Hex } from "@/lib/otp";
 import { pusherServer } from "@/lib/pusher";
 import { ACTIVITY_CATEGORIES, extractRequestIp, logActivityEvent } from "@/lib/activity-events";
+import { cookies } from "next/headers";
+import { isLegitIndianMobile } from "@/lib/phone-utils";
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,63 +36,65 @@ export async function POST(req: NextRequest) {
         });
       }
     }
-    const { referralSource, referralCode, phoneNumber, otp } = body as {
+    const { referralSource, referralCode, phoneNumber } = body as {
       referralSource?: string;
       collegeName?: string;
       referralCode?: string;
       phoneNumber?: string;
-      otp?: string;
     };
     const collegeName = typeof (body as { collegeName?: unknown })?.collegeName === "string"
       ? (body as { collegeName: string }).collegeName.trim()
       : "";
 
-    if (!referralSource) {
-      return NextResponse.json({ error: "referralSource is required" }, { status: 400 });
-    }
-    if (collegeName.length < 2) {
-      return NextResponse.json({ error: "collegeName is required" }, { status: 400 });
+    // Read provider from current JWT so it survives the token refresh
+    const rawToken = cookies().get("occ-token")?.value;
+    const existingPayload = rawToken ? await verifyAuthToken(rawToken).catch(() => null) : null;
+    const provider = existingPayload?.provider;
+
+    // Phase-3-only path: user already completed phases 1 & 2 (onboardingComplete === true)
+    // In this case referralSource & collegeName are already stored — skip validation
+    const isPhoneOnlyUpdate = user.onboardingComplete === true;
+
+    if (!isPhoneOnlyUpdate) {
+      if (!referralSource) {
+        return NextResponse.json({ error: "referralSource is required" }, { status: 400 });
+      }
+      if (collegeName.length < 2) {
+        return NextResponse.json({ error: "collegeName is required" }, { status: 400 });
+      }
     }
 
+    // Phone is ALWAYS required — no skip
     const cleanPhone = typeof phoneNumber === "string" ? phoneNumber.replace(/\D/g, "") : "";
     if (cleanPhone.length !== 10) {
       return NextResponse.json({ error: "A valid 10-digit phone number is required" }, { status: 400 });
     }
 
-    // Check if phone number is already taken
-    const existing = await prisma.user.findFirst({
-      where: { 
-        phoneNumber: cleanPhone,
-        id: { not: user.id }
-      }
+    // Check phone uniqueness
+    const existingPhone = await prisma.user.findFirst({
+      where: { phoneNumber: cleanPhone, id: { not: user.id } }
     });
-
-    if (existing) {
-       return NextResponse.json({ error: "This phone number is already registered with another account" }, { status: 400 });
+    if (existingPhone) {
+      return NextResponse.json({ error: "This phone number is already registered with another account" }, { status: 400 });
     }
-
-    // OTP check removed as per requirement.
-    // 10-digit phone number is still strictly enforced above.
-
 
     const codeNormalized =
       typeof referralCode === "string" && referralCode.trim().length > 0
         ? referralCode.trim().toUpperCase()
         : "";
 
-    // Step 1: Update user record
+    // Update user record
     await prisma.user.update({
       where: { id: user.id },
       data: {
         onboardingComplete: true,
         phoneVerified: true,
-        referralSource,
-        collegeName,
         phoneNumber: cleanPhone,
+        ...(isPhoneOnlyUpdate ? {} : { referralSource, collegeName }),
       },
     });
 
-    if (codeNormalized) {
+    if (!isPhoneOnlyUpdate && codeNormalized) {
       const attached = await attachStudentToReferralCode({
         studentId: user.id,
         studentFullName: user.fullName,
@@ -114,8 +118,9 @@ export async function POST(req: NextRequest) {
       approvalStatus: refreshed.approvalStatus as "PENDING" | "APPROVED" | "REJECTED",
       suspended: refreshed.suspended,
       onboardingComplete: refreshed.onboardingComplete,
-      hasPhone: true,
-      phoneVerified: true,
+      hasPhone: isLegitIndianMobile(refreshed.phoneNumber),
+      phoneVerified: refreshed.phoneVerified,
+      ...(provider ? { provider } : {}),
     });
 
     const res = NextResponse.json({ success: true });

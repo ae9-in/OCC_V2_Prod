@@ -74,11 +74,12 @@ export function FashionScrollSection({ frames, loaded = true }: Props) {
       style={{
         height: `${FASHION_SCROLL_HEIGHT_VH}vh`,
         background: FAC.bg,
+        contain: "layout style paint",
       }}
     >
       <div
         className="sticky top-0 relative isolate h-[100dvh] w-full overflow-hidden"
-        style={{ background: FAC.bg }}
+        style={{ background: FAC.bg, willChange: "transform" }}
       >
         <FashionCanvas
           frames={frames}
@@ -127,7 +128,7 @@ export function FashionScrollSection({ frames, loaded = true }: Props) {
                 className="mb-6 text-[10px] tracking-[0.5em] uppercase"
                 style={{ color: FAC.accent }}
               >
-                OCC · Fashion Club
+                OCC . Fashion Club
               </p>
               <h1 className="font-headline text-5xl font-light leading-[1.0] tracking-wide sm:text-6xl md:text-7xl lg:text-8xl">
                 Runway
@@ -138,7 +139,7 @@ export function FashionScrollSection({ frames, loaded = true }: Props) {
                 className="mx-auto mt-8 max-w-md text-sm leading-relaxed md:text-base"
                 style={{ color: FAC.muted }}
               >
-                Scroll — the sequence scrubs beneath you. One viewport, editorial motion.
+                Scroll -- the sequence scrubs beneath you. One viewport, editorial motion.
               </p>
             </motion.div>
             <motion.p
@@ -147,7 +148,7 @@ export function FashionScrollSection({ frames, loaded = true }: Props) {
               animate={{ y: [0, 6, 0] }}
               transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
             >
-              Scroll to begin ↓
+              Scroll to begin 
             </motion.p>
           </div>
         ) : null}

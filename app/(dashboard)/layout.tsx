@@ -2,7 +2,9 @@ import dynamic from "next/dynamic";
 import { requireUser } from "@/lib/auth";
 import { OCCSidebar } from "@/components/occ-dashboard/OCCSidebar";
 import { OCCHeader } from "@/components/occ-dashboard/OCCHeader";
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
+import { verifyAuthToken } from "@/lib/jwt";
+import { isLegitIndianMobile } from "@/lib/phone-utils";
 
 const DashboardPageTransition = dynamic(
   () =>
@@ -19,13 +21,22 @@ export default async function DashboardLayout({
   const user = await requireUser();
   const path = headers().get("next-url") ?? "/dashboard";
 
-  // Strict Phone Audit: Everyone must have a legit phone number
-  const { isLegitIndianMobile } = await import("@/lib/phone-utils");
-  const hasLegitPhone = isLegitIndianMobile(user.phoneNumber);
+  const { redirect } = await import("next/navigation");
 
-  if (!hasLegitPhone || !user.onboardingComplete) {
-    const { redirect } = await import("next/navigation");
+  if (!user.onboardingComplete) {
     redirect("/onboarding");
+  }
+
+  if (!isLegitIndianMobile(user.phoneNumber)) {
+    const token = cookies().get("occ-token")?.value;
+    let provider: string | undefined;
+    if (token) {
+      try {
+        const jwtPayload = await verifyAuthToken(token);
+        provider = jwtPayload.provider;
+      } catch { /* token unreadable — fall through to default */ }
+    }
+    redirect(provider === "google" ? "/onboarding" : "/update-phone");
   }
 
   return (

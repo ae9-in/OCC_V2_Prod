@@ -90,6 +90,7 @@ export async function POST(req: NextRequest) {
       onboardingComplete: true,
       phoneVerified: false,
       hasPhone: !!(validated.phoneNumber && validated.phoneNumber.replace(/\D/g, "").length === 10),
+      provider: "local",
     });
     const response = NextResponse.json({ success: true, user }, { status: 201 });
     response.cookies.set("occ-token", token, authCookieOptions);

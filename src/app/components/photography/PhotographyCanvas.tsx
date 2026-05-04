@@ -4,7 +4,7 @@ import type { PhotographyPlayhead } from "../../../hooks/usePhotographyPhysics";
 interface Props {
   frames: HTMLImageElement[];
   totalFrames: number;
-  /** Updates every animation frame — do not use throttled React state for scrubbing. */
+  /** Updates every animation frame -- do not use throttled React state for scrubbing. */
   playheadCanvasRef: MutableRefObject<PhotographyPlayhead>;
   flashOpacity: number;
 }
@@ -172,6 +172,8 @@ export function PhotographyCanvas({
         background: "#0C0C0A",
         opacity: frames.length > 0 ? 1 : 0,
         transition: "opacity 0.6s ease",
+        willChange: "transform",
+        contain: "strict",
       }}
     />
   );

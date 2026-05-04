@@ -276,6 +276,7 @@ export async function GET(req: NextRequest) {
     onboardingComplete: user.onboardingComplete,
     phoneVerified: user.phoneVerified,
     hasPhone: isLegitIndianMobile(user.phoneNumber),
+    provider: "google",
   });
 
   const mobileReturnCookie = recoveredMobileReturn;

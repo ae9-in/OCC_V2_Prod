@@ -17,7 +17,7 @@ import {
   PC,
 } from "./photographyConstants";
 
-/** Scroll progress (0→1) over which the intro title fades — then chapters take over. */
+/** Scroll progress (0->1) over which the intro title fades -- then chapters take over. */
 const HERO_FADE_END = 0.1;
 
 interface Props {
@@ -80,11 +80,12 @@ export function PhotographyScrollSection({ frames, loaded = true }: Props) {
       style={{
         height: `${PHOTO_SCROLL_HEIGHT_VH}vh`,
         background: "#0a0a0a",
+        contain: "layout style paint",
       }}
     >
       <div
         className="sticky top-0 relative isolate h-[100dvh] w-full overflow-hidden"
-        style={{ background: "#0a0a0a" }}
+        style={{ background: "#0a0a0a", willChange: "transform" }}
       >
         <PhotographyCanvas
           frames={frames}
@@ -104,7 +105,7 @@ export function PhotographyScrollSection({ frames, loaded = true }: Props) {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-[rgba(10,10,10,0.28)]" />
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[rgba(10,10,10,0.35)] via-transparent to-transparent" />
 
-        {/* Extra read legibility on first frame — eases off as you scroll */}
+        {/* Extra read legibility on first frame -- eases off as you scroll */}
         <div
           className="pointer-events-none absolute inset-0 z-[24]"
           style={{
@@ -113,7 +114,7 @@ export function PhotographyScrollSection({ frames, loaded = true }: Props) {
           }}
         />
 
-        {/* Darkroom Cinema — same sticky view as the sequence; scroll = scrub + fade intro */}
+        {/* Darkroom Cinema -- same sticky view as the sequence; scroll = scrub + fade intro */}
         {heroVisible ? (
           <div
             className="pointer-events-none absolute inset-0 z-[30] flex flex-col items-center justify-center px-6 text-center"
@@ -131,7 +132,7 @@ export function PhotographyScrollSection({ frames, loaded = true }: Props) {
                 className="mb-6 text-[10px] tracking-[0.5em] uppercase"
                 style={{ color: PC.accent }}
               >
-                OCC · Photography Club
+                OCC . Photography Club
               </p>
               <h1 className="font-headline text-5xl font-light leading-[1.0] tracking-wide sm:text-6xl md:text-7xl lg:text-8xl">
                 Darkroom
@@ -142,7 +143,7 @@ export function PhotographyScrollSection({ frames, loaded = true }: Props) {
                 className="mx-auto mt-8 max-w-md text-sm leading-relaxed md:text-base"
                 style={{ color: PC.muted }}
               >
-                Scroll — the same frame sequence scrubs beneath you. No second page.
+                Scroll -- the same frame sequence scrubs beneath you. No second page.
               </p>
             </motion.div>
             <motion.p
@@ -151,7 +152,7 @@ export function PhotographyScrollSection({ frames, loaded = true }: Props) {
               animate={{ y: [0, 6, 0] }}
               transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
             >
-              Scroll to begin ↓
+              Scroll to begin 
             </motion.p>
           </div>
         ) : null}

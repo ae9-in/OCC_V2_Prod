@@ -62,11 +62,15 @@ export function BikeScrollSection({ frames, loaded = true }: Props) {
     <section
       ref={containerRef}
       className="relative"
-      style={{ height: `${SCROLL_HEIGHT_VH}vh`, background: "#080808" }}
+      style={{
+        height: `${SCROLL_HEIGHT_VH}vh`,
+        background: "#080808",
+        contain: "layout style paint",
+      }}
     >
       <div
         className="sticky top-0 relative isolate h-[100dvh] w-full overflow-hidden"
-        style={{ background: "#080808" }}
+        style={{ background: "#080808", willChange: "transform" }}
       >
         <BikersCanvas
           frames={frames}
@@ -105,7 +109,7 @@ export function BikeScrollSection({ frames, loaded = true }: Props) {
                 className="mb-6 text-[10px] tracking-[0.5em] uppercase"
                 style={{ color: COLORS.accent }}
               >
-                OCC · Off-Campus Clubs
+                OCC . Off-Campus Clubs
               </p>
               <h1 className="font-headline text-5xl font-light leading-[1.05] tracking-wide sm:text-6xl md:text-7xl lg:text-8xl">
                 Mountain
@@ -118,7 +122,7 @@ export function BikeScrollSection({ frames, loaded = true }: Props) {
                 className="mx-auto mt-8 max-w-md text-sm leading-relaxed md:text-base"
                 style={{ color: COLORS.muted }}
               >
-                Scroll — the same ride scrubs beneath you. One viewport, no second page.
+                Scroll -- the same ride scrubs beneath you. One viewport, no second page.
               </p>
             </motion.div>
             <motion.p
@@ -127,7 +131,7 @@ export function BikeScrollSection({ frames, loaded = true }: Props) {
               animate={{ y: [0, 6, 0] }}
               transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
             >
-              Scroll to begin ↓
+              Scroll to begin 
             </motion.p>
           </div>
         ) : null}

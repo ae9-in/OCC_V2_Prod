@@ -22,8 +22,9 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [initializing, setInitializing] = useState(true);
+  const [startedAtStep3, setStartedAtStep3] = useState(false);
 
-  // Auto-skip logic for existing users with no phone
+  // Determine correct starting step based on user's current DB state
   useEffect(() => {
     async function checkExistingProfile() {
       try {
@@ -31,13 +32,14 @@ export default function OnboardingPage() {
         if (res.ok) {
           const profile = await res.json();
           const user = profile.user;
-          // If they haven't verified phone, force Step 3.
-          // Otherwise, if they have a college name, they might have skipped previous steps.
-          if (user.phoneVerified === false) {
+          if (!user.onboardingComplete) {
+            setStep(1);
+          } else if (!isLegitIndianMobile(user.phoneNumber)) {
             setCollegeName(user.collegeName || "Not specified");
             setReferralSource(user.referralSource || "Other");
             setStep(3);
-          } else if (user.onboardingComplete === true) {
+            setStartedAtStep3(true);
+          } else {
             router.push("/dashboard");
           }
         } else if (res.status === 401) {
@@ -429,7 +431,7 @@ export default function OnboardingPage() {
               <div className="pt-6">
                 <button
                   type="button"
-                  onClick={handleFinalSubmit}
+                  onClick={() => handleFinalSubmit()}
                   disabled={loading || phoneNumber.length !== 10}
                   className="w-full flex items-center justify-center space-x-2 bg-blue-600 text-white py-4 rounded-xl font-semibold text-lg hover:bg-blue-500 transition duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(37,99,235,0.2)]"
                 >
@@ -445,14 +447,16 @@ export default function OnboardingPage() {
                     </>
                   )}
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setStep(2)}
-                  disabled={loading}
-                  className="w-full py-3 text-sm font-medium text-white/50 hover:text-white/80 transition-colors disabled:opacity-30"
-                >
-                  Go back
-                </button>
+                {!startedAtStep3 && (
+                  <button
+                    type="button"
+                    onClick={() => setStep(2)}
+                    disabled={loading}
+                    className="w-full py-3 text-sm font-medium text-white/50 hover:text-white/80 transition-colors disabled:opacity-30"
+                  >
+                    Go back
+                  </button>
+                )}
               </div>
             </div>
           )}
