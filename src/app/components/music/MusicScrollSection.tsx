@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useEffect, type MutableRefObject } from "react";
 import { motion } from "motion/react";
 import { useMusicVideoPhysics } from "../../../hooks/useMusicVideoPhysics";
 import { MusicVideoCanvas } from "./MusicVideoCanvas";
@@ -15,12 +15,13 @@ import {
 const HERO_FADE_END = 0.1;
 
 interface Props {
-  frames: ImageBitmap[];
+  frames?: ImageBitmap[];
+  videoRef: MutableRefObject<HTMLVideoElement | null>;
   totalFrames: number;
   loaded?: boolean;
 }
 
-export function MusicScrollSection({ frames, totalFrames, loaded = true }: Props) {
+export function MusicScrollSection({ videoRef, totalFrames, loaded = true }: Props) {
   const containerRef = useRef<HTMLElement>(null);
 
   // Physics -- playheadCanvasRef updates every rAF (for canvas), playhead throttled ~75fps (for React overlays)
@@ -71,7 +72,7 @@ export function MusicScrollSection({ frames, totalFrames, loaded = true }: Props
       >
         {/* Canvas reads from refs -- ZERO re-renders during scroll */}
         <MusicVideoCanvas
-          frames={frames}
+          videoRef={videoRef}
           totalFrames={totalFrames}
           playheadRef={playheadCanvasRef}
           flashOpacityRef={flashOpacityRef}

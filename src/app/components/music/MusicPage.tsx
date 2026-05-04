@@ -409,7 +409,7 @@ export function MusicPage({
   hideLoader?: boolean;
   userId?: string | null;
 } = {}) {
-  const { frames, loaded, progress, totalFrames } = useMusicVideoFrames(VIDEO_SRC);
+  const { videoRef, loaded, progress, totalFrames } = useMusicVideoFrames(VIDEO_SRC);
 
   return (
     <div className="cursor-none" style={{ background: FC.bg, color: FC.text }}>
@@ -425,7 +425,7 @@ export function MusicPage({
         <span className="text-[10px] tracking-[0.3em] uppercase" style={{ color: FC.muted }}>Music</span>
       </header>
 
-      <MusicScrollSection frames={frames} totalFrames={totalFrames} loaded={loaded} />
+      <MusicScrollSection videoRef={videoRef} totalFrames={totalFrames} loaded={loaded} />
 
       <OpenMicExperienceSection userId={userId} />
       <GigOpportunitiesSection />
